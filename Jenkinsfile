@@ -16,10 +16,12 @@ pipeline {
             }
         }
         stage('Docker Build') {
-            sh """
-            docker build -t mahiketh/backend:${appVersion}
-            docker images
-            """
+            steps {
+                sh """
+                docker build -t mahiketh/backend:${appVersion}
+                docker images
+                """
+            }
         }
     }
 }
