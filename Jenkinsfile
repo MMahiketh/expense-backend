@@ -18,7 +18,7 @@ pipeline {
         stage('Docker Build') {
             steps {
                 sh """
-                docker build -t mahiketh/backend:${appVersion}
+                docker build -t mahiketh/backend:${appVersion} .
                 docker images
                 """
             }
