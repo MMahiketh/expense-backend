@@ -1,6 +1,10 @@
 pipeline {
-    agent {
-        label 'Agent-npm'
+    agent any
+    // agent {
+    //     label 'Agent-npm'
+    // }
+    options {
+        disableConcurrentBuilds()
     }
     environment {
         appVersion = ''
@@ -22,6 +26,11 @@ pipeline {
                 docker images
                 """
             }
+        }
+    }
+    post {
+        always {
+            deleteDir()
         }
     }
 }
