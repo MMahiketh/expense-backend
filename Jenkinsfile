@@ -9,15 +9,18 @@ pipeline {
         ansiColor('xterm')
     }
     environment {
-        awsID = '339712874850'
-        awsECRurl = 'dkr.ecr.us-east-1.amazonaws.com'
         project = 'expense'
-        ENV = 'dev'
         component = 'backend'
+        ENV = 'dev'
+        awsID = '339712874850'
         awsRegion = 'us-east-1'
         awsCreds = 'aws-creds'
+        awsECRurl = 'dkr.ecr.us-east-1.amazonaws.com'
         appVersion = ''
         imageURL = ''
+    }
+    parameters{
+        booleanParam(name: 'deploy', defaultValue: false, description: 'Select for deploy')
     }
     stages {
         stage('Read Version') {
@@ -56,15 +59,14 @@ pipeline {
             }
         }
         stage('Deploy') {
-            steps {
-                withAWS(region: "${awsRegion}", credentials: "${awsCreds}") {
-                    sh """
-                        aws eks update-kubeconfig --region ${awsRegion} --name expense-dev
-                        cd helm
-                        sed -i 's/IMAGE_VERSION/${appVersion}/g' values-${ENV}.yaml
-                        helm upgrade --install ${component} -f values-${ENV}.yaml .
-                    """
-                }
+            when {
+                expression { params.deploy }
+            }
+            steps{
+                build job: 'backend-cd', parameters: [
+                    string(name: 'version', value: "$appVersion"),
+                    string(name: 'ENV', value: "$ENV"),
+                ], wait: true
             }
         }
     }
