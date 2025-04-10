@@ -4,7 +4,18 @@ pipeline {
     //     label 'Agent-npm'
     // }
     options {
+        timeout(time: 30, unit: 'MINUTES')
         disableConcurrentBuilds()
+        ansiColor('xterm')
+    }
+    environment {
+        awsID = '339712874850'
+        awsECRurl = 'dkr.ecr.us-east-1.amazonaws.com'
+        project = 'expense'
+        ENV = 'dev'
+        component = 'backend'
+        awsRegion = 'us-east-1'
+        awsCreds = 'aws-creds'
     }
     environment {
         appVersion = ''
@@ -22,7 +33,7 @@ pipeline {
         stage('Docker Build') {
             steps {
                 sh """
-                    docker build -t 339712874850.dkr.ecr.us-east-1.amazonaws.com/expense/dev/backend:${appVersion} .
+                    docker build -t ${awsID}.${awsECRurl}/${project}/${ENV}/${component}:${appVersion} .
                     docker images
                 """
             }
@@ -31,8 +42,8 @@ pipeline {
             steps {
                 withAWS(region: "${awsRegion}", credentials: "${awsCreds}") {
                     sh """
-                        aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 339712874850.dkr.ecr.us-east-1.amazonaws.com
-                        docker push 339712874850.dkr.ecr.us-east-1.amazonaws.com/expense/dev/backend:${appVersion}                        
+                        aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${awsID}.${awsECRurl}
+                        docker push ${awsID}.${awsECRurl}/${project}/${ENV}/${component}:${appVersion}
                     """
                 }
             }
