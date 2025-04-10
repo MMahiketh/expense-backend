@@ -1,6 +1,6 @@
 deployment:
   desiredReplicas: 2
-  imageURL: IMAGE_URL
+  imageURL: 339712874850.dkr.ecr.us-east-1.amazonaws.com/expense/dev/backend
   imageVersion: IMAGE_VERSION
 service:
   port: 8080
