@@ -4,7 +4,7 @@ pipeline {
     //     label 'Agent-npm'
     // }
     options {
-        timeout(time: 30, unit: 'MINUTES')
+        timeout(time: 5, unit: 'MINUTES')
         disableConcurrentBuilds()
         ansiColor('xterm')
     }
@@ -17,6 +17,7 @@ pipeline {
         awsRegion = 'us-east-1'
         awsCreds = 'aws-creds'
         appVersion = ''
+        imageURL = ''
     }
     stages {
         stage('Read Version') {
@@ -28,10 +29,18 @@ pipeline {
                 }
             }
         }
+        stage('Setup') {
+            steps {
+                script {
+                    imageURL = "${awsID}.${awsECRurl}/${project}/${ENV}/${component}"
+                    echo "Image URL: ${imageURL}"
+                }
+            }
+        }
         stage('Docker Build') {
             steps {
                 sh """
-                    docker build -t ${awsID}.${awsECRurl}/${project}/${ENV}/${component}:${appVersion} .
+                    docker build -t ${imageURL}:${appVersion} .
                     docker images
                 """
             }
@@ -40,8 +49,21 @@ pipeline {
             steps {
                 withAWS(region: "${awsRegion}", credentials: "${awsCreds}") {
                     sh """
-                        aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${awsID}.${awsECRurl}
-                        docker push ${awsID}.${awsECRurl}/${project}/${ENV}/${component}:${appVersion}
+                        aws ecr get-login-password --region ${awsRegion} | docker login --username AWS --password-stdin ${awsID}.${awsECRurl}
+                        docker push ${imageURL}:${appVersion}
+                    """
+                }
+            }
+        }
+        stage('Deploy') {
+            steps {
+                withAWS(region: "${awsRegion}", credentials: "${awsCreds}") {
+                    sh """
+                        aws eks update-kubeconfig --region ${awsRegion} --name expense-dev
+                        cd helm
+                        sed -i 's/IMAGE_VERSION/${appVersion}/g' values-${ENV}.yaml
+                        sed -i 's/IMAGE_URL/${appVersion}/g' values-${ENV}.yaml
+                        helm upgrade --install ${component} -f values-${ENV}.yaml .
                     """
                 }
             }
