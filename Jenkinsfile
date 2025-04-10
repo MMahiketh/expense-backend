@@ -62,7 +62,7 @@ pipeline {
                         aws eks update-kubeconfig --region ${awsRegion} --name expense-dev
                         cd helm
                         sed -i 's/IMAGE_VERSION/${appVersion}/g' values-${ENV}.yaml
-                        sed -i 's/IMAGE_URL/${appVersion}/g' values-${ENV}.yaml
+                        sed -i 's/IMAGE_URL/${imageURL}/g' values-${ENV}.yaml
                         helm upgrade --install ${component} -f values-${ENV}.yaml .
                     """
                 }
