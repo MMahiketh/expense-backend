@@ -16,8 +16,6 @@ pipeline {
         component = 'backend'
         awsRegion = 'us-east-1'
         awsCreds = 'aws-creds'
-    }
-    environment {
         appVersion = ''
     }
     stages {
